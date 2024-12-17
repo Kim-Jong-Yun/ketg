@@ -540,7 +540,7 @@ exports.moveRobotToTask = async (req, res) => {
   }
 };
 
-/*
+/*//ㅁㄴㅁㄴ
 // moveRobotToTask 함수의 이전 버전 (주석 처리)
 exports.moveRobotToTask = async (req, res) => {
   const { robotId } = req.body;

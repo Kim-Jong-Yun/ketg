@@ -21,7 +21,7 @@ router.get('/robots/active', auth, robotController.getActiveRobots);
 router.post('/addWorkflow', workflowQueueController.addWorkflowToRobotQueue);
 router.get('/robot/:robotId', workflowQueueController.getWorkflowQueueByRobotId);
 router.delete('/:robotId/workflows/:workflowId', workflowQueueController.removeWorkflowByIdFromRobotQueue);
-router.post('/assignNextWorkflow', auth, robotController.assignNextWorkflow);
+//router.post('/assignNextWorkflow', auth, robotController.assignNextWorkflow);
 
 // ROS 관련 라우트 주석 처리
 /*
