@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 const taskRoutes = require('./routes/task.route');  // Task 관련 라우터
-const { initRosSubscriber } = require('./ros/rosSubscriber');  // ROS 서브스크라이버 통합
+// const { initRosSubscriber } = require('./ros/rosSubscriber');  // ROS 서브스크라이버 통합 (주석 처리)
 
 const app = express();
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -43,8 +43,8 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
 // Task API 라우터 적용
 app.use('/task', taskRoutes);  // 작업(Task) 관련 라우터
 
-// ROS 서브스크라이버 초기화
-initRosSubscriber();
+// ROS 서브스크라이버 초기화 (주석 처리)
+// initRosSubscriber();
 
 // 에러 처리 미들웨어
 app.use((err, req, res, next) => {
