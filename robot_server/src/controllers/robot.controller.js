@@ -4,7 +4,6 @@ const axios = require('axios');
 const { GridFSBucket } = require('mongodb');
 const WebSocket = require('ws');
 const Map = require('../models/map.model');
-const rosnodejs = require('rosnodejs');
 console.log('CMAKE_PREFIX_PATH:', process.env.CMAKE_PREFIX_PATH);
 console.log('ROS_PACKAGE_PATH:', process.env.ROS_PACKAGE_PATH);
 
