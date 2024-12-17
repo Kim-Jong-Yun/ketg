@@ -4,8 +4,8 @@ const axios = require('axios');
 const { GridFSBucket } = require('mongodb');
 const WebSocket = require('ws');
 const Map = require('../models/map.model');
-console.log('CMAKE_PREFIX_PATH:', process.env.CMAKE_PREFIX_PATH);
-console.log('ROS_PACKAGE_PATH:', process.env.ROS_PACKAGE_PATH);
+// console.log('CMAKE_PREFIX_PATH:', process.env.CMAKE_PREFIX_PATH);
+// console.log('ROS_PACKAGE_PATH:', process.env.ROS_PACKAGE_PATH);
 
 const exec = require('child_process').exec; // SSH를 통해 원격 명령어 실행
 const WorkflowQueue = require('../models/workflowQueue.model');
@@ -24,8 +24,6 @@ exports.getRobots = async (req, res) => {
     console.error(`Error: ${error}`);
     res.status(500).send('Failed to fetch robots');
   }
-  
-  
 };
 
 // 로봇 등록 및 ROS와 연동
@@ -94,13 +92,12 @@ exports.updateRobot = async (req, res) => {
   }
 };
 
-
 // 로봇에게 맵 전송
 exports.sendMapToRobots = async (req, res) => {
   try {
     // ROS 노드 초기화
-    await rosnodejs.initNode('/map_publisher_node');
-    const nh = rosnodejs.nh;
+    // await rosnodejs.initNode('/map_publisher_node');
+    // const nh = rosnodejs.nh;
 
     // 선택된 맵 정보 조회
     const monitoredMapResponse = await axios.get('http://172.30.1.30:5557/map/monitored', {
@@ -136,20 +133,20 @@ exports.sendMapToRobots = async (req, res) => {
     const fileExtension = monitoredMap.filename.split('.').pop();
 
     // ROS 메시지 생성
-    const std_msgs = rosnodejs.require('std_msgs').msg;
-    const mapTopic = nh.advertise('/map_topic', std_msgs.String);
-    const mapMsg = new std_msgs.String({
-      data: JSON.stringify({
-        map_data: mapData.toString('base64'),
-        file_extension: fileExtension,
-        metadata: metadata
-      })
-    });
+    // const std_msgs = rosnodejs.require('std_msgs').msg;
+    // const mapTopic = nh.advertise('/map_topic', std_msgs.String);
+    // const mapMsg = new std_msgs.String({
+    //   data: JSON.stringify({
+    //     map_data: mapData.toString('base64'),
+    //     file_extension: fileExtension,
+    //     metadata: metadata
+    //   })
+    // });
 
     // ROS 토픽으로 맵 데이터 퍼블리시
-    mapTopic.publish(mapMsg);
+    // mapTopic.publish(mapMsg);
     console.log('Map data published to /map_topic');
-    
+
     res.status(200).json({ message: 'Map sent to robots successfully' });
   } catch (error) {
     console.error('Error sending map to robots:', error);
@@ -158,7 +155,8 @@ exports.sendMapToRobots = async (req, res) => {
 };
 
 // 로봇 등록 해제
-/*exports.unregisterRobot = async (req, res) => {
+/*
+exports.unregisterRobot = async (req, res) => {
   try {
     const { id } = req.params;
     const robot = await Robot.findOneAndUpdate(
@@ -176,7 +174,8 @@ exports.sendMapToRobots = async (req, res) => {
     console.error('Error unregistering robot:', error);
     res.status(500).json({ message: 'Error unregistering robot', error: error.message });
   }
-};*/
+};
+*/
 exports.unregisterRobot = async (req, res) => {
   try {
     const { id } = req.params;
@@ -281,6 +280,7 @@ exports.bringupRobot = async (req, res) => {
     res.status(500).json({ message: 'Error bringing up the robot', error: error.message });
   }
 };
+
 exports.updateRobotBattery = async (req, res) => {
   try {
     const { namespace, percentage } = req.body;
@@ -332,6 +332,7 @@ exports.updateRobotStatus = async (req, res) => {
       res.status(500).json({ message: '로봇 상태 업데이트 중 오류가 발생했습니다.' });
   }
 };
+
 exports.toggleRobotActive = async (req, res) => {
   try {
     const { id } = req.params; // 로봇 ID를 URL 파라미터로 받음
@@ -355,6 +356,7 @@ exports.toggleRobotActive = async (req, res) => {
     res.status(500).json({ message: '로봇 active 상태 업데이트 실패', error: error.message });
   }
 };
+
 exports.getActiveRobots = async (req, res) => {
   try {
     // 요청한 사용자 ID와 Active 상태가 1이며, 이름이 빈 문자열이 아닌 로봇만 조회
@@ -365,74 +367,9 @@ exports.getActiveRobots = async (req, res) => {
     res.status(500).json({ message: 'Active 상태인 로봇 조회 중 오류가 발생했습니다.', error: error.message });
   }
 };
-exports.startRosbridgeWebsocket = (req, res) => {
-  exec('roslaunch rosbridge_server rosbridge_websocket.launch', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error starting rosbridge: ${error.message}`);
-      return res.status(500).send('rosbridge 시작에 실패했습니다.');
-    }
-    res.send('rosbridge가 성공적으로 시작되었습니다.');
-  });
-};
 
-exports.stopRosbridgeWebsocket = (req, res) => {
-  exec('pkill -f rosbridge_websocket', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error stopping rosbridge: ${error.message}`);
-      return res.status(500).send('rosbridge 중지에 실패했습니다.');
-    }
-    res.send('rosbridge가 성공적으로 중지되었습니다.');
-  });
-};
-exports.assignNextWorkflow = async (req, res) => {
-  const { robotId } = req.body;
-
-  // robotId 유효성 검사
-  if (!robotId || !mongoose.Types.ObjectId.isValid(robotId)) {
-    return res.status(400).json({ message: '유효한 robotId가 필요합니다.' });
-  }
-
-  try {
-    // 로봇 문서 찾기
-    const robot = await Robot.findById(robotId);
-    if (!robot) {
-      return res.status(404).json({ message: '로봇을 찾을 수 없습니다.' });
-    }
-
-    // currentWorkflow가 비어 있는지 확인
-    if (robot.currentWorkflow.node !== null) {
-      return res.status(400).json({ message: '현재 워크플로우가 비어 있지 않습니다.' });
-    }
-
-    // 워크플로우 큐 찾기
-    const workflowQueue = await WorkflowQueue.findOne({ robotId });
-    if (!workflowQueue || workflowQueue.workflows.length === 0) {
-      return res.status(404).json({ message: '워크플로우 큐가 비어 있습니다.' });
-    }
-
-    // 첫 번째 워크플로우 가져오기
-    const nextWorkflow = workflowQueue.workflows[0];
-
-    // 로봇의 currentWorkflow에 할당
-    robot.currentWorkflow = {
-      node: nextWorkflow.node,
-      step: nextWorkflow.step,
-      x: nextWorkflow.x,
-      y: nextWorkflow.y,
-      status: 'In Progress'
-    };
-    await robot.save();
-
-    // 큐에서 워크플로우 제거
-    workflowQueue.workflows.shift();
-    await workflowQueue.save();
-
-    res.status(200).json({ message: '워크플로우가 성공적으로 할당되었습니다.', currentWorkflow: robot.currentWorkflow });
-  } catch (error) {
-    console.error('워크플로우 할당 중 오류 발생:', error);
-    res.status(500).json({ message: '워크플로우 할당 중 오류가 발생했습니다.', error: error.message });
-  }
-};
+// ROS 노드 초기화 및 퍼블리셔 설정 부분 주석 처리
+/*
 let nh; // 전역 네임스페이스 핸들러
 const publishers = {}; // 퍼블리셔 캐시
 
@@ -458,11 +395,14 @@ function getOrCreatePublisher(robotName) {
   return publishers[topicName];
 }
 
+const TaskPath = rosnodejs.require('custom_msgs').msg.TaskPath; // TaskPath.msg는 ROS에서 정의한 메시지 타입
+*/
+
+// map 및 path 관련 API URLs
 const MAP_SERVER_URL = process.env.MAP_SERVER_URL || 'http://172.30.1.33:5557/map/monitored/nodes';
 const SHORT_PATH_API_URL = process.env.SHORT_PATH_API_URL || 'http://172.30.1.33:5557/map/shortPaths/find';
 
-const TaskPath = rosnodejs.require('custom_msgs').msg.TaskPath; // TaskPath.msg는 ROS에서 정의한 메시지 타입
-
+// moveRobotToTask 함수 내 ROS 관련 코드 주석 처리
 exports.moveRobotToTask = async (req, res) => {
   const { robotId } = req.body;
 
@@ -563,7 +503,8 @@ exports.moveRobotToTask = async (req, res) => {
 
     console.log(`moveRobotToTask: 경로 조회 성공 - 총 거리: ${totalDistance}, 경로: ${JSON.stringify(path)}`);
 
-    // 6. ROS 메시지 발행
+    // 6. ROS 메시지 발행 (주석 처리)
+    /*
     console.log(`moveRobotToTask: ${robot.name} 로봇을 위한 ROS 메시지 발행 중...`);
 
     const pub = getOrCreatePublisher(robot.name);
@@ -580,6 +521,7 @@ exports.moveRobotToTask = async (req, res) => {
     pub.publish(taskPathMsg);
 
     console.log(`moveRobotToTask: ROS 메시지를 ${pub.getTopic()} 토픽으로 성공적으로 발행했습니다.`);
+    */
 
     // 7. 좌표값 및 step 반환
     const responseData = {
@@ -597,7 +539,9 @@ exports.moveRobotToTask = async (req, res) => {
     res.status(500).json({ error: '좌표 추출 중 서버 오류 발생', details: error.message });
   }
 };
+
 /*
+// moveRobotToTask 함수의 이전 버전 (주석 처리)
 exports.moveRobotToTask = async (req, res) => {
   const { robotId } = req.body;
 
@@ -715,6 +659,8 @@ exports.moveRobotToTask = async (req, res) => {
   }
 };
 */
+
+// clearCurrentWorkflow 함수는 ROS와 관련 없으므로 그대로 유지
 exports.clearCurrentWorkflow = async (req, res) => {
   try {
       const { id } = req.params;
