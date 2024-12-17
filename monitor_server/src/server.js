@@ -2,11 +2,11 @@ require('dotenv').config();
 const app = require('./app');
 const express = require('express');
 const WebSocket = require('ws');
-const { exec } = require('child_process'); // Python 스크립트를 실행하기 위해 사용
+//const { exec } = require('child_process'); // Python 스크립트를 실행하기 위해 사용
 
 const PORT = process.env.PORT;
 const WS_PORT = 5050; // WebSocket 서버 포트
-
+/*
 // 서버 실행 시 Python 스크립트 실행 (odom_publisher.py와 ros_odom_to_websocket.py)
 exec('python3 src/ros/odom_publisher.py', (error, stdout, stderr) => {
   if (error) {
@@ -31,7 +31,7 @@ exec('python3 src/ros/ros_odom_to_websocket.py', (error, stdout, stderr) => {
   }
   console.log(`ROS Odom to WebSocket Output: ${stdout}`);
 });
-
+*/
 // Express 서버 실행
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

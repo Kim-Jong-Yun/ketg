@@ -4,7 +4,7 @@ const http = require('http');
 const axios = require('axios');
 const app = require('./app');
 const cron = require('node-cron'); // Polling 작업을 위한 Cron
-const { exec } = require('child_process'); // Python 스크립트를 실행하기 위해 사용
+//const { exec } = require('child_process'); // Python 스크립트를 실행하기 위해 사용
 const Robot = require('../src/models/robot.model'); // 로봇 모델 가져오기 (MongoDB)
 const WorkflowQueue = require('../src/models/workflowQueue.model'); // 워크플로우 모델 가져오기
 const moveRobotToTask = require('../src/controllers/robot.controller').moveRobotToTask; // 이동 로직 가져오기
@@ -76,7 +76,7 @@ wss.on('connection', (ws) => {
 });
 
 // Python 스크립트 실행 함수
-const executePythonScript = (scriptName) => {
+/*const executePythonScript = (scriptName) => {
   exec(`python3 ./ros/${scriptName}`, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error executing ${scriptName}: ${error.message}`);
@@ -88,12 +88,13 @@ const executePythonScript = (scriptName) => {
     }
     console.log(`${scriptName} output: ${stdout}`);
   });
-};
+};*/
 
 // Python 스크립트 실행
-/*executePythonScript('odom_publisher.py');*/// maxbuffer 발생하는데 이 부분 유효하게 작동 중인 친구인지 몰라, 검증 귀찮,,, 주석처리 24.11.28. [#좌표#maxbuffer]
-executePythonScript('ros_odom_to_websocket.py');
-executePythonScript('robot_status.py');
+// ROS 관련 스크립트는 주석 처리하여 실행되지 않도록 합니다.
+/* executePythonScript('odom_publisher.py'); */ // maxbuffer 발생하는 부분
+/* executePythonScript('ros_odom_to_websocket.py'); */
+//executePythonScript('robot_status.py'); // 여전히 실행하고자 하는 스크립트만 실행
 
 const TASK_LOG_SERVER_URL = 'http://172.30.1.33:8080/task/task-logs'; // 작업 기록 API URL
 
