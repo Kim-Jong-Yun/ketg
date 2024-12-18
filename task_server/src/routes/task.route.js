@@ -15,5 +15,5 @@ router.put('/tasks/:taskId/workflow/:workflowId/nodeToZero', auth, taskControlle
 
 router.post('/task-logs', taskController.createTaskLog);
 router.get('/task-logs', auth, taskController.getAllTaskLogs);
-
+router.get('/logs', auth, taskController.fetchTaskLogs);
 module.exports = router;

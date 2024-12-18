@@ -196,3 +196,109 @@ exports.getAllTaskLogs = async (req, res) => {
     });
   }
 };
+
+exports.fetchTaskLogs = async (req, res) => {
+  try {
+    // 쿼리 파라미터 추출
+    const {
+      robotName,
+      robotIp,
+      nodeName,
+      step,
+      status,
+      from,
+      to,
+      searchTerm,
+      page = 1,
+      limit = 50,
+      sortBy = 'timestamp',
+      sortOrder = 'desc'
+    } = req.query;
+
+    // 쿼리 객체 생성
+    const query = {};
+
+    if (robotName) {
+      query.robotName = { $regex: robotName, $options: 'i' }; // 대소문자 구분 없이 검색
+    }
+
+    if (robotIp) {
+      query.robotIp = { $regex: robotIp, $options: 'i' };
+    }
+
+    if (nodeName) {
+      query.nodeName = { $regex: nodeName, $options: 'i' };
+    }
+
+    if (step) {
+      query.step = { $regex: step, $options: 'i' };
+    }
+
+    if (status) {
+      // status는 단일 값 또는 콤마로 구분된 여러 값일 수 있음
+      const statusArray = status.split(',').map(s => s.trim());
+      query.status = { $in: statusArray };
+    }
+
+    if (from || to) {
+      query.timestamp = {};
+      if (from) {
+        query.timestamp.$gte = new Date(from);
+      }
+      if (to) {
+        query.timestamp.$lte = new Date(to);
+      }
+    }
+
+    if (searchTerm) {
+      const regex = new RegExp(searchTerm, 'i');
+      query.$or = [
+        { robotName: regex },
+        { robotIp: regex },
+        { nodeName: regex },
+        { step: regex },
+        { status: regex },
+        { message: regex } // 만약 message 필드가 있다면 추가
+      ];
+    }
+
+    // 페이징 계산
+    const pageNumber = parseInt(page, 10) || 1;
+    const pageSize = parseInt(limit, 10) || 50;
+    const skip = (pageNumber - 1) * pageSize;
+
+    // 정렬 옵션 설정
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+    // 총 항목 수 계산
+    const total = await TaskLog.countDocuments(query);
+
+    // 로그 데이터 가져오기
+    const taskLogs = await TaskLog.find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(pageSize)
+      .exec();
+
+    // 총 페이지 수 계산
+    const pages = Math.ceil(total / pageSize);
+
+    res.status(200).json({
+      success: true,
+      message: '작업 기록 조회 성공',
+      count: taskLogs.length,
+      total,
+      page: pageNumber,
+      pages,
+      data: taskLogs,
+    });
+  } catch (error) {
+    console.error('TaskLog 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: '작업 기록 조회 중 오류가 발생했습니다.',
+      error: error.message, // 클라이언트에 보이지 않도록 주의
+    });
+  }
+};
